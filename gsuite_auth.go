@@ -20,12 +20,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
-
-//fix: ojo_read_vpn_auth
 
 // https://openvpn.net/community-resources/using-alternative-authentication-methods/
 // From: https://developers.google.com/admin-sdk/directory/v1/quickstart/go
@@ -182,12 +179,6 @@ func main() {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-
-	config := aws.Config{
-		Region: aws.String(os.Getenv("AWS_REGION")),
-	}
-	sess := session.Must(session.NewSession(&config))
-	signer := v4.NewSigner(sess.Config.Credentials)
 
 	// Create DynamoDB client
 	svc := dynamodb.New(sess)
