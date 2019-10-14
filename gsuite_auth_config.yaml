@@ -1,0 +1,6 @@
+domain: ojolabs.com
+token: ./token.json
+credentials: ./credentials.json
+dynamodb_table: vpnauth
+# optional: define an org unit allowed to connect to this endpoint
+orgunit: Engineering
