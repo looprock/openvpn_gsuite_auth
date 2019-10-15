@@ -19,7 +19,7 @@ UserUUID - a non-email based ID, just in case
 
 ## dynamodb access
 
-Coming soon!
+Create a user with read permissions to dynamodb_table and populate the aws_access/secret_keys in gsuite_auth_config.yaml with the keys for that user.
 
 ## Plugin setup
 compile and copy gsuite_auth to /usr/local/sbin
