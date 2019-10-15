@@ -126,8 +126,6 @@ func main() {
 	var c conf
 	gsuiteConfig := "/etc/openvpn/gsuite_auth_config.yaml"
 	c.getConf(gsuiteConfig)
-	OrganizationUnit := fmt.Sprintf("/%s", c.OrgUnit)
-	// fmt.Printf("AWS_DEFAULT_REGION: %s", os.Getenv("AWS_DEFAULT_REGION"))
 	os.Setenv("AWS_ACCESS_KEY_ID", c.AwsAccessKey)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", c.AwsSecretKey)
 	os.Setenv("AWS_REGION", c.AwsRegion)
@@ -164,7 +162,8 @@ func main() {
 	} else {
 		for _, u := range r.Users {
 			//https://godoc.org/google.golang.org/api/admin/directory/v1#User
-			if len(OrganizationUnit) != 0 {
+			if len(c.OrgUnit) != 0 {
+                                OrganizationUnit := fmt.Sprintf("/%s", c.OrgUnit)
 				if OrganizationUnit != u.OrgUnitPath {
 					log.Fatalf("User %s found, but not part of Organizion Unit %s!", u.PrimaryEmail, OrganizationUnit)
 					os.Exit(1)
