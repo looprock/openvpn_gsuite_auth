@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"os"
 
-	//"github.com/spf13/viper"
-
 	"gopkg.in/yaml.v2"
 
 	"golang.org/x/crypto/bcrypt"
@@ -33,11 +31,14 @@ import (
 // https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/go/example_code/dynamodb/DynamoDBReadItem.go
 
 type conf struct {
-	GsuiteDomain string `yaml:"domain"`
-	Credentials  string `yaml:"credentials"`
-	Token        string `yaml:"token"`
+	GsuiteDomain string `yaml:"gsuite_domain"`
+	Credentials  string `yaml:"gsuite_credentials"`
+	Token        string `yaml:"gsuite_token"`
+	AwsAccessKey string `yaml:"aws_access_key"`
+	AwsSecretKey string `yaml:"aws_secret_key"`
+	AwsRegion    string `yaml:"aws_region"`
 	TableName    string `yaml:"dynamodb_table"`
-	OrgUnit      string `yaml:"orgunit,omitempty"`
+	OrgUnit      string `yaml:"gsuite_org_unit,omitempty"`
 }
 
 // Item is returned entry from dynamodb for userEmail
@@ -126,7 +127,10 @@ func main() {
 	gsuiteConfig := "/etc/openvpn/gsuite_auth_config.yaml"
 	c.getConf(gsuiteConfig)
 	OrganizationUnit := fmt.Sprintf("/%s", c.OrgUnit)
-	fmt.Printf("AWS_DEFAULT_REGION: %s", os.Getenv("AWS_DEFAULT_REGION"))
+	// fmt.Printf("AWS_DEFAULT_REGION: %s", os.Getenv("AWS_DEFAULT_REGION"))
+	os.Setenv("AWS_ACCESS_KEY_ID", c.AwsAccessKey)
+	os.Setenv("AWS_SECRET_ACCESS_KEY", c.AwsSecretKey)
+	os.Setenv("AWS_REGION", c.AwsRegion)
 
 	b, err := ioutil.ReadFile(c.Credentials)
 	if err != nil {
@@ -145,6 +149,7 @@ func main() {
 		log.Fatalf("Unable to retrieve directory Client %v", err)
 	}
 
+	userPass := fmt.Sprintf("%s", os.Getenv("password"))
 	userEmail := fmt.Sprintf("%s@%s", os.Getenv("username"), c.GsuiteDomain)
 	usernameQuery := fmt.Sprintf("email:%s\n", userEmail)
 	r, err := srv.Users.List().Customer("my_customer").Query(usernameQuery).Do()
@@ -154,27 +159,25 @@ func main() {
 
 	// if 1) user exists, 2) user not suspended, 3) user a member of a specific org unit, if defined
 	if len(r.Users) == 0 {
-		fmt.Print("No users found.\n")
+		log.Fatalf("No users found.\n")
 		os.Exit(1)
 	} else {
 		for _, u := range r.Users {
 			//https://godoc.org/google.golang.org/api/admin/directory/v1#User
 			if len(OrganizationUnit) != 0 {
 				if OrganizationUnit != u.OrgUnitPath {
-					fmt.Printf("User %s found, but not part of Organizion Unit %s!", u.PrimaryEmail, OrganizationUnit)
+					log.Fatalf("User %s found, but not part of Organizion Unit %s!", u.PrimaryEmail, OrganizationUnit)
 					os.Exit(1)
 				}
 			}
 			if u.Suspended == true {
-				fmt.Printf("User %s found, but account is suspended!", u.PrimaryEmail)
+				log.Fatalf("User %s found, but account is suspended!", u.PrimaryEmail)
 				os.Exit(1)
 			}
-			fmt.Printf("%s (%s) Authorized\n", u.PrimaryEmail, u.Name.FullName)
+			log.Printf("%s (%s) Authorized\n", u.PrimaryEmail, u.Name.FullName)
 		}
 	}
 	// yay, authorization worked, now lets do authentication by validating a password stored in a database
-
-	password := os.Getenv("password")
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -192,7 +195,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Panicf(err.Error())
 		os.Exit(1)
 	}
 
@@ -204,17 +207,17 @@ func main() {
 	}
 
 	if item.Password == "" {
-		fmt.Println("Could not find password for: " + userEmail)
+		log.Println("Could not find password for: " + userEmail)
 		os.Exit(1)
 	}
 
 	hash := item.Password
 
-	match := CheckPasswordHash(password, hash)
+	match := CheckPasswordHash(userPass, hash)
 	if match == false {
-		fmt.Printf("%s NOT Authenticated\n", userEmail)
+		log.Printf("%s NOT Authenticated\n", userEmail)
 		os.Exit(1)
 	}
-	fmt.Printf("%s Authenticated\n", userEmail)
-	os.Exit(1)
+	log.Printf("%s Authenticated\n", userEmail)
+	os.Exit(0)
 }
