@@ -9,9 +9,9 @@ generate credentials and token files by following the instructions at:
 https://developers.google.com/admin-sdk/directory/v1/quickstart/go
 
 ## dynamodb setup
-create a dynamodb table with the attributes: UserID, Password, UserUUID
+create a dynamodb table with the attributes: UserId, Password, UserUUID
 
-UserID - the user's full email address
+UserId - the user's full email address
 
 Password - the user's bcrypt hashed password
 
