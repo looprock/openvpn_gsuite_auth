@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-10 col-lg-8 mx-lg-auto mx-md-auto">
+      <h1 class="pt-5 pb-2">Home</h1>
+      <p class="pt-5">Hi {{ current_user.name }}</p>
+      {% if message %}
+      <p class="pt-2"><strong>{{ message }}</strong></p>
+      {% endif %}
+      {% if (current_user.otp_configured == false) or (current_user.password_configured == false)  %}
+      <p class="pt-2"><b>Please complete the items labeled 'Onboarding Task' below.</b></p>
+      {% endif %}
+      {% if current_user.password_configured == false %}
+      <p class="pt-2"><a href="/password">Onboarding Task: Set Password</a></p>
+      {% else %}
+      <p class="pt-2"><a href="/password">Update Password</a></p>
+      {% endif %}
+      {% if current_user.otp_configured == false %}
+      <p class="pt-2"><a href="/otpauth">Onboarding Task: Setup OTP</a></p>
+      {% else %}
+      <p class="pt-2"><a href="/otpauth">Reset OTP</a></p>
+      {% endif %}      
+
+    </div>
+  </div>
+</div>
+{% endblock %}

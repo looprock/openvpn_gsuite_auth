@@ -31,14 +31,6 @@ import (
 	"github.com/xlzd/gotp"
 )
 
-// https://openvpn.net/community-resources/using-alternative-authentication-methods/
-// From: https://developers.google.com/admin-sdk/directory/v1/quickstart/go
-// https://build.openvpn.net/doxygen/defer_2simple_8c_source.html
-// https://developers.google.com/admin-sdk/directory/v1/guides/manage-users
-// https://developers.google.com/admin-sdk/directory/v1/quickstart/python
-// https://www.alexedwards.net/blog/how-to-hash-and-verify-passwords-with-argon2-in-go
-// https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/go/example_code/dynamodb/DynamoDBReadItem.go
-
 type conf struct {
 	AwsAccessKey      string `yaml:"aws_access_key"`
 	AwsSecretKey      string `yaml:"aws_secret_key"`

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+{% block title %}
+TOTP Setup
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-10 col-lg-8 mx-lg-auto mx-md-auto">
+      <h1 class="pt-5 pb-2">Authentication QR Code</h1>
+
+      {% if completed %}
+      <p class="pt-3">If you feel like you need to globally reset your one-time password setup for some reason, please contact the Platform Engineering team.</p>
+      <p class="pt-3"><b>Please note: you will need to delete and re-add to all current devices if you do this!</b></p>
+      {% else %}
+      <p class="pt-5">
+        Please use the following QR code to add this OTP server to your authenticator app.
+      </p>
+      <p class="pt-5">
+        <center><img id="picture" src="data:image/jpeg;base64,{{ img_data }}"></center>
+      </p>
+      <p class="pt-5">
+        <b>Note: don't refresh the page or the QR code will be lost!</b>
+      </p>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

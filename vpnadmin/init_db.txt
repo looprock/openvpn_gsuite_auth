@@ -1,0 +1,16 @@
+# start the db if needed:
+brew services start postgresql
+
+# create the db and set up user:
+
+create database otpserver;
+
+create role otpserver LOGIN PASSWORD 'otpserver';
+
+GRANT CONNECT ON DATABASE otpserver TO otpserver;
+
+from otpserver db:
+GRANT pg_read_all_data TO otpserver;
+GRANT pg_write_all_data TO otpserver;
+
+

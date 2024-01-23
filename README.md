@@ -10,6 +10,8 @@ generate credentials and token files by following the instructions at:
 
 https://developers.google.com/admin-sdk/directory/v1/quickstart/python
 
+Once you've run the quickstart project, copy the (credentials/token).json files into /etc/openvpn
+
 NOTE: I wasn't able to generate a token with the go example but was able to with python
 
 ## dynamodb setup

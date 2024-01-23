@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "otp-server"
+version = "0.1.0"
+description = ""
+authors = ["Douglas Land <dland@homestoryrewards.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pyotp = "^2.9.0"
+cryptography = "^41.0.7"
+flask = "^3.0.0"
+flask-wtf = "^1.2.1"
+flask-login = "^0.6.3"
+requests = "^2.31.0"
+flask-sqlalchemy = "^3.1.1"
+psycopg2-binary = "^2.9.9"
+wtforms = "^3.1.2"
+bootstrap-flask = "^2.3.3"
+sh = "^2.0.6"
+pillow = "^10.2.0"
+pycryptodome = "^3.20.0"
+bcrypt = "^4.1.2"
+boto3 = "^1.34.21"
+botocore = "^1.34.21"
+google-auth-oauthlib = "^1.2.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.12.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,3 +1,6 @@
 credentials.json
 token.json
 gsuite_auth_config.yaml
+.env
+env
+__pycache__
