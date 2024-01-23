@@ -37,3 +37,6 @@ configure your server by adding the line:
 
 auth-user-pass-verify /usr/local/sbin/gsuite_auth via-env
 
+# VPNAuth - management interface
+
+## qrcreator
