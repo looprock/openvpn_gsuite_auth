@@ -16,5 +16,5 @@ require (
 	github.com/pschlump/ansi v1.0.1 // indirect
 	github.com/pschlump/godebug v1.0.4 // indirect
 	github.com/pschlump/json v1.12.0 // indirect
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
+	golang.org/x/sys v0.1.0 // indirect
 )
