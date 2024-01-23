@@ -1,9 +1,0 @@
-gsuite_domain: company.com
-gsuite_token: ./token.json
-gsuite_credentials: ./credentials.json
-aws_access_key:  XXXXXX
-aws_secret_key: XXXXXX
-aws_region: us-east-1
-dynamodb_table: vpnauth
-# optional: define a Gsuite org unit allowed to connect to this endpoint
-gsuite_org_unit: Engineering

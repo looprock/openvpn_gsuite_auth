@@ -1,0 +1,10 @@
+https://stackoverflow.com/questions/64955285/how-to-get-new-token-json-for-google-apps-script-api-or-google-cloud-platform
+https://support.google.com/looker-studio/thread/64936636/error-400-invalid-scope-error-when-performing-oauth2-flow-for-datastudio-api?hl=en
+https://pkg.go.dev/golang.org/x/oauth2@v0.16.0/google#SDKConfig.Scopes
+https://developers.google.com/identity/protocols/oauth2
+https://developers.google.com/identity/protocols/oauth2/web-server#exchange-authorization-code
+https://developers.google.com/identity/protocols/oauth2/web-server#python_1
+https://developers.google.com/workspace/guides/create-credentials#desktop-app
+https://developers.google.com/admin-sdk/directory/v1/quickstart/go
+https://dev.to/siddheshk02/oauth-20-implementation-in-golang-3mj1
+https://medium.com/@amanpal2072004/how-to-generate-refresh-token-and-use-them-to-access-google-api-f7565413c548

@@ -1,0 +1,18 @@
+aws_access_key:  XXXXXX
+aws_secret_key: XXXXXX
+aws_region: us-east-1
+dynamodb_table: vpnauth
+# optional: configure verification against a Gsuite service account
+# setting gsuite_credentials will trigger a check against Gsuite
+# gsuite_credentials: ./credentials.json
+# gsuite_token: ./token.json
+# optional: define a Gsuite org unit allowed to connect to this endpoint
+# gsuite_org_unit: Engineering
+# optional: configure mac address filtering
+# setting dynamodb_mac_table will trigger a check of the MAC address
+# dynamodb_mac_table: vpnmac
+# optional: table dynamo table to query TOPT shared secrets
+# setting dynamodb_topt_table will trigger a check of the TOTP code
+# dynamodb_topt_table: vpntopt
+# optional: configure a decryption key for TOPT 2FA (requires vpnauth setup)
+# totp_secret: 1234
