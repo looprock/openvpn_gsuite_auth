@@ -1,6 +1,6 @@
 module github.com/looprock/openvpn_gsuite_auth
 
-go 1.21
+go 1.21.1
 
 require (
 	github.com/aws/aws-sdk-go v1.50.1
