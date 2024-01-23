@@ -1,7 +1,6 @@
 builds:
 - id: gsuite_auth
   binary: gsuite_auth
-  gobinary: go1.21.6
   goos:
     - linux
     - darwin
@@ -9,7 +8,6 @@ builds:
   dir: qrcreator
   main: qrcreator.go
   binary: qrcreator
-  gobinary: go1.21.6
   goos:
     - linux
     - darwin
