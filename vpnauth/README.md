@@ -23,3 +23,8 @@ DYNAMODB_TOPT_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOPT_TABLE','vpntopt')
 SQLALCHEMY_DATABASE_URI = os.getenv('VPNAUTH_SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://otpserver:otpserver@127.0.0.1:5432/otpserver')
 ```
 
+## DynamoDB tables
+
+to use all features, create the dynamodb tables: vpnpasswd, vpntotp, vpnmac
+
+All tables use the Partition key: UserId
