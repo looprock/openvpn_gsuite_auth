@@ -1,0 +1,61 @@
+FROM public.ecr.aws/docker/library/golang:1.21-bullseye as gobuilder
+WORKDIR /app
+COPY qrcreator/go.mod /app/
+COPY qrcreator/go.sum /app/
+RUN go mod download
+COPY ./qrcreator/qrcreator.go /app/main.go
+RUN ls -al --recursive /app/ 
+RUN go build -o qrcreator main.go \
+    && chmod +x qrcreator
+RUN echo `pwd`
+RUN ls -al --recursive /app/
+
+FROM public.ecr.aws/docker/library/python:3.12-slim-bullseye AS pybuilder
+ENV PYTHONUNBUFFERED=1 \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100 \
+  POETRY_HOME="/opt/poetry" \
+  POETRY_VIRTUALENVS_IN_PROJECT=true \
+  POETRY_NO_INTERACTION=1 \
+  PYSETUP_PATH="/opt/pysetup" \
+  VENV_PATH="/opt/pysetup/.venv"
+ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+RUN apt-get update \
+    && mkdir /app \
+    && DEBIAN_FRONTEND="noninteractive" apt install --no-install-recommends -y libpq-dev gcc curl build-essential \
+    && curl -sSL https://install.python-poetry.org | python -
+
+RUN ls -al; pwd
+COPY vpnauth/poetry.lock vpnauth/pyproject.toml $PYSETUP_PATH/
+WORKDIR $PYSETUP_PATH
+RUN poetry install --only main
+
+# operational stage
+FROM public.ecr.aws/docker/library/python:3.12-slim-bullseye
+
+ENV PYTHONUNBUFFERED=1 \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PIP_NO_CACHE_DIR=off \
+  PIP_DISABLE_PIP_VERSION_CHECK=on \
+  PIP_DEFAULT_TIMEOUT=100 \
+  POETRY_HOME="/opt/poetry" \
+  POETRY_VIRTUALENVS_IN_PROJECT=true \
+  POETRY_NO_INTERACTION=1 \
+  PYSETUP_PATH="/opt/pysetup" \
+  VENV_PATH="/opt/pysetup/.venv"
+
+# RUN apt-get update \
+#     && apt install -y git \
+#     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=pybuilder $VENV_PATH $VENV_PATH
+ENV PATH="/app/bin:$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+WORKDIR /app
+COPY --from=gobuilder /app/qrcreator $VENV_PATH/bin/qrcreator
+COPY vpnauth/templates /app/templates
+COPY vpnauth/*.py /app/
+RUN chmod +x /app/*.py \
+    && chmod +x $VENV_PATH/bin/*
+CMD ["flask", "run", "--host=0.0.0.0"]

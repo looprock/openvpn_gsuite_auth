@@ -82,14 +82,14 @@ if not os.environ.get('VPNAUTH_GOOGLE_CLIENT_SECRET'):
 else:
     CLIENT_SECRET = os.environ.get('VPNAUTH_GOOGLE_CLIENT_SECRET')
 
-if not os.environ.get('VPNAUTH_TOPT_ENCRYPTION_KEY'):
-    sys.exit("Error: VPNAUTH_TOPT_ENCRYPTION_KEY environment variable is not set")
+if not os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY'):
+    sys.exit("Error: VPNAUTH_TOTP_ENCRYPTION_KEY environment variable is not set")
 else:
-    TOPT_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOPT_ENCRYPTION_KEY')
+    TOTP_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY')
 
 SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
 DYNAMODB_PASSWD_TABLE = os.getenv('VPNAUTH_DYNAMODB_PASSWD_TABLE','vpnpasswd')
-DYNAMODB_TOPT_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOPT_TABLE','vpntopt')
+DYNAMODB_TOTP_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOTP_TABLE','vpnTOTP')
 SQLALCHEMY_DATABASE_URI = os.getenv('VPNAUTH_SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://otpserver:otpserver@127.0.0.1:5432/otpserver')
 
 class Base(DeclarativeBase):
@@ -166,13 +166,13 @@ def list_dynamodb_users():
 
 ## totp functions
 def reset_dynamodb_totp_secret(username, totp_secret):
-    '''Create or update the encrypted TOPT shares secret.'''
+    '''Create or update the encrypted TOTP shares secret.'''
     item_entry = {
         'UserId': username,
         'Password': totp_secret,
     }
     try:
-        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY).Table(DYNAMODB_TOPT_TABLE)
+        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY).Table(DYNAMODB_TOTP_TABLE)
         table.put_item(Item=item_entry)
         message = f"Secret for {username} set to {totp_secret}"
         return {'message': message, 'error': False}
@@ -272,7 +272,7 @@ def otpauth():
     temp_file_name = temp_file.name
     print(f"temp_file_name: {temp_file_name}")
     secret_key = pyotp.random_base32()
-    encrypted_secret = aesCbcPbkdf2EncryptToBase64(TOPT_ENCRYPTION_KEY, secret_key)
+    encrypted_secret = aesCbcPbkdf2EncryptToBase64(TOTP_ENCRYPTION_KEY, secret_key)
     response = reset_dynamodb_totp_secret(current_user.email, encrypted_secret)
     if response['error']:
         message = response['message']
