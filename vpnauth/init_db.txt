@@ -3,14 +3,15 @@ brew services start postgresql
 
 # create the db and set up user:
 
-create database otpserver;
+create database vpnauth;
 
-create role otpserver LOGIN PASSWORD 'otpserver';
+create role vpnauth LOGIN PASSWORD 'vpnauth';
 
-GRANT CONNECT ON DATABASE otpserver TO otpserver;
+GRANT CONNECT ON DATABASE vpnauth TO vpnauth;
 
-from otpserver db:
-GRANT pg_read_all_data TO otpserver;
-GRANT pg_write_all_data TO otpserver;
+from vpnauth db:
+GRANT pg_read_all_data TO vpnauth;
+GRANT pg_write_all_data TO vpnauth;
+GRANT ALL ON SCHEMA public TO vpnauth;
 
 
