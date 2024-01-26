@@ -16,7 +16,8 @@ TOPT_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOPT_ENCRYPTION_KEY')
 
 ## Override-able environment variables
 
-```SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
+```REDIRECT_URI = os.getenv('VPNAUTH_REDIRECT_URI','http://127.0.0.1:5000/oauth2callback')
+SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
 DYNAMODB_PASSWD_TABLE = os.getenv('VPNAUTH_DYNAMODB_PASSWD_TABLE','vpnpasswd')
 DYNAMODB_TOPT_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOPT_TABLE','vpntopt')
 SQLALCHEMY_DATABASE_URI = os.getenv('VPNAUTH_SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://otpserver:otpserver@127.0.0.1:5432/otpserver')

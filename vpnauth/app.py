@@ -87,6 +87,7 @@ if not os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY'):
 else:
     TOTP_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY')
 
+REDIRECT_URI = os.getenv('VPNAUTH_REDIRECT_URI','http://127.0.0.1:5000/oauth2callback')
 SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
 DYNAMODB_PASSWD_TABLE = os.getenv('VPNAUTH_DYNAMODB_PASSWD_TABLE','vpnpasswd')
 DYNAMODB_TOTP_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOTP_TABLE','vpnTOTP')
@@ -296,21 +297,19 @@ def otpauth():
 def login():
     state = generate_state()
     print(f"state: {state}")
-    callback_url = url_for('oauth2callback', _external=True)
-    auth_url = f'{GOOGLE_AUTH_URL}?client_id={CLIENT_ID}&redirect_uri={callback_url}&response_type=code&scope={SCOPE}&state={state}'
+    auth_url = f'{GOOGLE_AUTH_URL}?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&scope={SCOPE}&state={state}'
     return redirect(auth_url)
 
 @app.route('/oauth2callback')
 def oauth2callback():
     if request.args.get('state') != session.get('state'):
         return 'Invalid state', 400
-    callback_url = url_for('oauth2callback', _external=True)
     authorization_code = request.args.get('code')
     token_payload = {
         'code': authorization_code,
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET,
-        'redirect_uri': callback_url,
+        'redirect_uri': REDIRECT_URI,
         'grant_type': 'authorization_code'
     }
     token_response = requests.post(GOOGLE_TOKEN_URL, data=token_payload)
