@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "otp-server"
+name = "vpnauth"
 version = "0.1.0"
 description = ""
 authors = ["Douglas Land <dland@homestoryrewards.com>"]
