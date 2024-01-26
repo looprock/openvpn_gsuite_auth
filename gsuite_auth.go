@@ -371,8 +371,8 @@ func verifyMac(userEmail string, c conf) {
 func main() {
 	var c conf
 	// TODO: make this look locally for config file as well for testing
-	// gsuiteConfig := "/etc/openvpn/gsuite_auth_config.yaml"
-	gsuiteConfig := "./gsuite_auth_config.yaml"
+	gsuiteConfig := "/etc/openvpn/gsuite_auth_config.yaml"
+	// gsuiteConfig := "./gsuite_auth_config.yaml"
 	c.getConf(gsuiteConfig)
 	os.Setenv("AWS_ACCESS_KEY_ID", c.AwsAccessKey)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", c.AwsSecretKey)
