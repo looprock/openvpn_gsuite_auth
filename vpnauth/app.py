@@ -92,6 +92,7 @@ if not os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY'):
 else:
     TOTP_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY')
 
+OVPN_BASE_DIR = os.getenv('VPNAUTH_OVPN_BASE_DIR','/app/static/ovpn')
 REDIRECT_URI = os.getenv('VPNAUTH_REDIRECT_URI','http://127.0.0.1:5000/oauth2callback')
 SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
 DYNAMODB_PASSWD_TABLE = os.getenv('VPNAUTH_DYNAMODB_PASSWD_TABLE','vpnpasswd')
@@ -213,7 +214,7 @@ def get_ovpns():
     '''Get a list of all openvpn configs from static directory.'''
     ovpns = []
     try:
-        basedirname = 'static/ovpn'
+        basedirname = OVPN_BASE_DIR
         for filename in os.listdir(basedirname):
             if filename.endswith('.ovpn'):
                 ovpns.append(filename)
