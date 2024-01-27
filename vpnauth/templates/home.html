@@ -11,6 +11,7 @@
       {% if message %}
       <p class="pt-2"><strong>{{ message }}</strong></p>
       {% endif %}
+      <p class="pt-2"><b>Your username is: {{ current_user.email }}</b></p>
       {% if (current_user.otp_configured == false) or (current_user.password_configured == false)  %}
       <p class="pt-2"><b>Please complete the items labeled 'Onboarding Task' below.</b></p>
       {% endif %}
