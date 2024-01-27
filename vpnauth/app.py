@@ -2,7 +2,7 @@
 # fake edit to trigger build: 5
 from flask import Flask, request, redirect, session, render_template, url_for
 from flask_bootstrap import Bootstrap5
-from flask_login import LoginManager, current_user, login_user, logout_user, UserMixin
+from flask_login import LoginManager, current_user, login_user, logout_user, UserMixin, login_required
 
 from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
@@ -223,6 +223,8 @@ def get_ovpns():
     return [None, ovpns]
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
+# require login for all static files
+app.view_functions['static'] = login_required(app.send_static_file)
 # configure the SQLite database, relative to the app instance folder
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 # initialize the app with the extension
