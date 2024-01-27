@@ -17,7 +17,8 @@ VPNAUTH_TOPT_ENCRYPTION_KEY
 
 ## Override-able environment variables
 
-```VPNAUTH_REDIRECT_URI, Default: http://127.0.0.1:5000/oauth2callback
+```VPNAUTH_OVPN_BASE_DIR, Default: /app/static/ovpn
+VPNAUTH_REDIRECT_URI, Default: http://127.0.0.1:5000/oauth2callback
 VPNAUTH_GOOGLE_SCOPE, Default: openid%20email%20profile
 VPNAUTH_DYNAMODB_PASSWD_TABLE, Default: vpnpasswd
 VPNAUTH_DYNAMODB_TOPT_TABLE, Default: vpntopt
