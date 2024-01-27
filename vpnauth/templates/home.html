@@ -24,7 +24,12 @@
       {% else %}
       <p class="pt-2"><a href="/otpauth">Reset OTP</a></p>
       {% endif %}      
-
+      {% if list_ovpns %}
+      <p class="pt-5">Download VPN Configurations</p>
+      {% for ovpn in ovpns %}
+      <p class="pt-2"><a href="{{ url_for('static', filename='ovpn/'+ovpn) }}">{{ ovpn }}</a></p>
+      {% endfor %}
+      {% endif %}
     </div>
   </div>
 </div>

@@ -72,6 +72,11 @@ if not os.environ.get('VPNAUTH_DYNAMODB_SECRET_KEY'):
 else:
     DYNAMODB_SECRET_KEY = os.environ.get('VPNAUTH_DYNAMODB_SECRET_KEY')
 
+if not os.environ.get('VPNAUTH_DYNAMODB_REGION'):
+    sys.exit("Error: VPNAUTH_DYNAMODB_REGION environment variable is not set")
+else:
+    DEFAULT_REGION = os.environ.get('VPNAUTH_DYNAMODB_REGION')
+
 if not os.environ.get('VPNAUTH_GOOGLE_CLIENT_ID'):
     sys.exit("Error: VPNAUTH_GOOGLE_CLIENT_ID environment variable is not set")
 else:
@@ -91,7 +96,7 @@ REDIRECT_URI = os.getenv('VPNAUTH_REDIRECT_URI','http://127.0.0.1:5000/oauth2cal
 SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
 DYNAMODB_PASSWD_TABLE = os.getenv('VPNAUTH_DYNAMODB_PASSWD_TABLE','vpnpasswd')
 DYNAMODB_TOTP_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOTP_TABLE','vpntotp')
-SQLALCHEMY_DATABASE_URI = os.getenv('VPNAUTH_SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://otpserver:otpserver@127.0.0.1:5432/otpserver')
+SQLALCHEMY_DATABASE_URI = os.getenv('VPNAUTH_SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://vpnauth:vpnauth@127.0.0.1:5432/vpnauth')
 
 class Base(DeclarativeBase):
   pass
@@ -140,7 +145,7 @@ def reset_dynamodb_password(username, password=None):
         'Password': password_hash,
     }
     try:
-        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY).Table(DYNAMODB_PASSWD_TABLE)
+        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY, region_name=DEFAULT_REGION).Table(DYNAMODB_PASSWD_TABLE)
         table.put_item(Item=item_entry)
         message = f"Password hash for {username} reset to {password_hash}"
         return {'message': message, 'error': False}
@@ -173,7 +178,7 @@ def reset_dynamodb_totp_secret(username, totp_secret):
         'Password': totp_secret,
     }
     try:
-        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY).Table(DYNAMODB_TOTP_TABLE)
+        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY, region_name=DEFAULT_REGION).Table(DYNAMODB_TOTP_TABLE)
         table.put_item(Item=item_entry)
         message = f"Secret for {username} set to {totp_secret}"
         return {'message': message, 'error': False}
@@ -204,7 +209,19 @@ def aesCbcPbkdf2EncryptToBase64(password, plaintext):
   ciphertextBase64 = base64Encoding(ciphertext)
   return saltBase64 + ":" + ivBase64 + ":" + ciphertextBase64
 
-app = Flask(__name__)
+def get_ovpns():
+    '''Get a list of all openvpn configs from static directory.'''
+    ovpns = []
+    try:
+        basedirname = 'static/ovpn'
+        for filename in os.listdir(basedirname):
+            if filename.endswith('.ovpn'):
+                ovpns.append(filename)
+    except FileNotFoundError as e:
+        return [e, ovpns]
+    return [None, ovpns]
+
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 # configure the SQLite database, relative to the app instance folder
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
 # initialize the app with the extension
@@ -237,8 +254,14 @@ def load_user(user_id):
 def home():
     if not current_user.is_authenticated:
         return redirect('/login')
-    return render_template('home.html', current_user=current_user, message=None)
-        
+    ovpnlist = get_ovpns()
+    message = None
+    if ovpnlist[0]:
+        message = get_ovpns()[0]
+    list_ovpns = False
+    if len(ovpnlist[1]) > 0:
+        list_ovpns = True
+    return render_template('home.html', current_user=current_user, message=message, list_ovpns=list_ovpns, ovpns=get_ovpns()[1])
 
 @app.route('/password', methods=['GET', 'POST'])
 def password():
