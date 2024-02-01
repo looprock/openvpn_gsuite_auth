@@ -98,6 +98,8 @@ SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
 DYNAMODB_PASSWD_TABLE = os.getenv('VPNAUTH_DYNAMODB_PASSWD_TABLE','vpnpasswd')
 DYNAMODB_TOTP_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOTP_TABLE','vpntotp')
 SQLALCHEMY_DATABASE_URI = os.getenv('VPNAUTH_SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://vpnauth:vpnauth@127.0.0.1:5432/vpnauth')
+PBKDF2_ITERATIONS_STR = os.getenv('VPNAUTH_PBKDF2_ITERATIONS','15000')
+PBKDF2_ITERATIONS = int(PBKDF2_ITERATIONS_STR)
 
 class Base(DeclarativeBase):
   pass
@@ -201,7 +203,7 @@ def generateSalt32Byte():
 def aesCbcPbkdf2EncryptToBase64(password, plaintext):
   passwordBytes = password.encode("ascii")
   salt = generateSalt32Byte()
-  PBKDF2_ITERATIONS = 15000
+  # PBKDF2_ITERATIONS = 15000
   encryptionKey = PBKDF2(passwordBytes, salt, 32, count=PBKDF2_ITERATIONS, hmac_hash_module=SHA256)
   cipher = AES.new(encryptionKey, AES.MODE_CBC)
   ciphertext = cipher.encrypt(pad(plaintext.encode("ascii"), AES.block_size))
@@ -292,12 +294,10 @@ def otpauth():
     if not current_user.is_authenticated:
         return redirect('/login')
     userinfo = db.session.query(User).filter(User.id == current_user.id).first()
-    print(f"userinfo.otp_configured: {userinfo.otp_configured}")
     if userinfo.otp_configured:
         return render_template("otpauth.html", img_data=None, completed=True)
     temp_file = tempfile.NamedTemporaryFile(mode='w', delete=True, suffix='.png')
     temp_file_name = temp_file.name
-    print(f"temp_file_name: {temp_file_name}")
     secret_key = pyotp.random_base32()
     encrypted_secret = aesCbcPbkdf2EncryptToBase64(TOTP_ENCRYPTION_KEY, secret_key)
     response = reset_dynamodb_totp_secret(current_user.email, encrypted_secret)
@@ -322,7 +322,6 @@ def otpauth():
 @app.route('/login')
 def login():
     state = generate_state()
-    print(f"state: {state}")
     auth_url = f'{GOOGLE_AUTH_URL}?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&response_type=code&scope={SCOPE}&state={state}'
     return redirect(auth_url)
 
@@ -363,11 +362,8 @@ def oauth2callback():
         password_configured=False
     )
     if not db.session.get(User, unique_id):
-        print("adding user")
         db.session.add(user)
         db.session.commit()
-    else:
-        print("found user")
     # Begin user session by logging the user in
     login_user(user)
     return redirect('/')

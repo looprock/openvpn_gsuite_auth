@@ -23,6 +23,7 @@ VPNAUTH_GOOGLE_SCOPE, Default: openid%20email%20profile
 VPNAUTH_DYNAMODB_PASSWD_TABLE, Default: vpnpasswd
 VPNAUTH_DYNAMODB_TOPT_TABLE, Default: vpntopt
 VPNAUTH_SQLALCHEMY_DATABASE_URI, Default: postgresql+psycopg2://vpnauth:vpnauth@127.0.0.1:5432/vpnauth
+VPNAUTH_PBKDF2_ITERATIONS, Default: 15000
 ```
 
 ## DynamoDB tables

@@ -4,5 +4,4 @@ gsuite_auth_config.yaml
 .env
 env
 __pycache__
-run.sh
 homestory-test.ovpn
