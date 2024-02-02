@@ -9,6 +9,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -291,15 +292,25 @@ func verifyTOTP(userEmail string, totpCode string, c conf) {
 		log.Println("Could not decrypt TOTP Secret: " + err.Error())
 		os.Exit(1)
 	}
-	totp := gotp.NewDefaultTOTP(decryptedSecret)
-	TOTPGenResult := totp.Now()
-	// fmt.Println("TOTP Code Generated: " + TOTPGenResult)
-	// fmt.Println("TOTP Code Provided: " + totpCode)
-	if TOTPGenResult != totpCode {
+	// build a slice of times to verify the TOTP code against, allowing for window of +/- 30 seconds
+	currentTime := time.Now()
+	minusThirtySeconds := currentTime.Add(-30 * time.Second)
+	plusThirtySeconds := currentTime.Add(30 * time.Second)
+	verifyTimes := [3]int64{currentTime.Unix(), minusThirtySeconds.Unix(), plusThirtySeconds.Unix()}
+	var verified bool
+	for _, verifyTime := range verifyTimes {
+		totp := gotp.NewDefaultTOTP(decryptedSecret)
+		verified = totp.Verify(totpCode, verifyTime)
+		if verified == true {
+			log.Printf("%s TOTP verified!\n", userEmail)
+			break
+		}
+	}
+
+	if verified == false {
 		log.Printf("ERROR: One time codes don't match! %s NOT Authenticated\n", userEmail)
 		os.Exit(1)
 	}
-	log.Printf("%s TOTP verified!\n", userEmail)
 }
 
 func verifyMac(userEmail string, c conf) {
@@ -368,11 +379,24 @@ func verifyMac(userEmail string, c conf) {
 	}
 }
 
+func fileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !os.IsNotExist(err)
+}
+
 func main() {
 	var c conf
-	// TODO: make this look locally for config file as well for testing
-	gsuiteConfig := "/etc/openvpn/gsuite_auth_config.yaml"
-	// gsuiteConfig := "./gsuite_auth_config.yaml"
+	// look locally for config file for testing
+	var gsuiteConfig string
+	if fileExists("./gsuite_auth_config.yaml") == true {
+		gsuiteConfig = "./gsuite_auth_config.yaml"
+	} else if fileExists("/etc/openvpn/gsuite_auth_config.yaml") == true {
+		gsuiteConfig = "/etc/openvpn/gsuite_auth_config.yaml"
+	} else {
+		log.Println("No config file found!")
+		os.Exit(1)
+	}
+	log.Println("Using config file: " + gsuiteConfig)
 	c.getConf(gsuiteConfig)
 	os.Setenv("AWS_ACCESS_KEY_ID", c.AwsAccessKey)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", c.AwsSecretKey)
