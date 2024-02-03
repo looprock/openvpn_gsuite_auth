@@ -1,0 +1,26 @@
+port 1194
+proto udp
+dev tun
+ca ca.crt
+cert server.crt
+key server.key
+dh none
+server 172.16.0.0 255.255.255.0
+duplicate-cn
+push "route 172.17.0.0 255.255.255.0"
+push "dhcp-option ADAPTER_DOMAIN_SUFFIX hi.com"
+push "dhcp-option DNS 172.17.0.1"
+keepalive 10 120
+tls-crypt ta.key
+cipher AES-256-GCM
+user nobody
+group nobody
+persist-key
+persist-tun
+status /var/log/openvpn/openvpn-status.log
+verb 3
+explicit-exit-notify 0
+auth SHA512
+reneg-sec 604800
+script-security 3
+auth-user-pass-verify /etc/openvpn/server/gsuite_auth via-env

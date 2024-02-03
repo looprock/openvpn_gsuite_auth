@@ -1,0 +1,39 @@
+client
+dev tun
+proto udp
+remote vpn.hi.com 1194
+auth-user-pass
+static-challenge "Enter Authenticator Code" 0
+resolv-retry infinite
+nobind
+user nobody
+group nobody
+persist-key
+persist-tun
+remote-cert-tls server
+cipher AES-256-GCM
+verb 3
+auth SHA256
+key-direction 1
+push-peer-info
+reneg-sec 604800
+<ca>
+-----BEGIN CERTIFICATE----- 
+...
+-----END CERTIFICATE-----
+</ca>
+<cert>
+Certificate:
+...
+-----END CERTIFICATE-----
+</cert>
+<key>
+-----BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----
+</key>
+<tls-crypt>
+-----BEGIN OpenVPN Static key V1-----
+...
+-----END OpenVPN Static key V1-----
+</tls-crypt>
