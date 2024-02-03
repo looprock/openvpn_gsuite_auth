@@ -88,7 +88,7 @@ if not os.environ.get('VPNAUTH_GOOGLE_CLIENT_SECRET'):
 else:
     CLIENT_SECRET = os.environ.get('VPNAUTH_GOOGLE_CLIENT_SECRET')
 
-# only trigger TOTP options if this is set
+# only trigger TOTP flow if this is set
 TOTP_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY')
 
 # vars with defaults
