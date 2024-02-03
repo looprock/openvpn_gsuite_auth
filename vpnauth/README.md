@@ -1,33 +1,38 @@
 # About
 
-vpnauth is a self-service portal for user on-boarding and managing their password and TOTP credentials.
+vpnauth is a self-service portal for user on-boarding and managing their password and TOTP credentials. At this point it naively assumes you're using TOTP as part of your authentication flow and won't work without TOTP being configured; though I might try to fix that.
 
-# Installation
+# Configuration
 
-## Required environment variables
+## Gsuite credentials
+This is assuming you've completed the 'Gsuite credentials' section in setting up gsuite_auth README. You'll need the client ID and secret from google console to complete the environment variable configuration.
 
-```VPNAUTH_GSUITE_DOMAIN
-VPNAUTH_DYNAMODB_ACCESS_KEY
-VPNAUTH_DYNAMODB_SECRET_KEY
-VPNAUTH_DYNAMODB_REGION
-VPNAUTH_GOOGLE_CLIENT_ID
-VPNAUTH_GOOGLE_CLIENT_SECRET
-VPNAUTH_TOPT_ENCRYPTION_KEY
+##  Required environment variables
+
+```
+VPNAUTH_GSUITE_DOMAIN: your GSuite Org domain
+VPNAUTH_DYNAMODB_ACCESS_KEY: an AWS access key with access to VPNAUTH_DYNAMODB_PASSWD_TABLE
+VPNAUTH_DYNAMODB_SECRET_KEY: an AWS secret key with access to VPNAUTH_DYNAMODB_PASSWD_TABLE
+VPNAUTH_DYNAMODB_REGION: the AWS region your dynamoDB table lives in
+VPNAUTH_GOOGLE_CLIENT_ID: the client ID from your webapp oauth2 setup
+VPNAUTH_GOOGLE_CLIENT_SECRET: the client secret from your webapp oauth2 setup
+VPNAUTH_TOTP_ENCRYPTION_KEY: the decryption key for decrypting entries from VPNAUTH_DYNAMODB_TOTP_TABLE
 ```
 
 ## Override-able environment variables
 
-```VPNAUTH_OVPN_BASE_DIR, Default: /app/static/ovpn
-VPNAUTH_REDIRECT_URI, Default: http://127.0.0.1:5000/oauth2callback
-VPNAUTH_GOOGLE_SCOPE, Default: openid%20email%20profile
-VPNAUTH_DYNAMODB_PASSWD_TABLE, Default: vpnpasswd
-VPNAUTH_DYNAMODB_TOPT_TABLE, Default: vpntopt
-VPNAUTH_SQLALCHEMY_DATABASE_URI, Default: postgresql+psycopg2://vpnauth:vpnauth@127.0.0.1:5432/vpnauth
-VPNAUTH_PBKDF2_ITERATIONS, Default: 15000
+```
+VPNAUTH_OVPN_BASE_DIR: if there are .ovpn files in this directory, they will be listed for download on everyone's homepage, Default: /app/static/ovpn
+VPNAUTH_REDIRECT_URI: the callback url used by your webapp, will likely need to be changed to a real domain like https://vpnauth.hi.com/oauth2callback, Default: http://127.0.0.1:5000/oauth2callback
+VPNAUTH_GOOGLE_SCOPE: required scopes, probably OK to leave alone, Default: openid%20email%20profile
+VPNAUTH_DYNAMODB_PASSWD_TABLE: dynamoDB table where bcrypt password hashes are stored, Default: vpnpasswd
+VPNAUTH_DYNAMODB_TOTP_TABLE: dynamoDB table storing encrypted (AES+CBC+Pbkdf2) passwords, Default: vpntotp
+VPNAUTH_SQLALCHEMY_DATABASE_URI: database storing user credentials for vpnauth, Default: postgresql+psycopg2://vpnauth:vpnauth@127.0.0.1:5432/vpnauth
+VPNAUTH_PBKDF2_ITERATIONS: number of pbkdf2 iterations, probably OK, Default: 15000
 ```
 
-## DynamoDB tables
+# DynamoDB tables
+See reference from gsuite_auth README
 
-to use all features, create the dynamodb tables: vpnpasswd, vpntotp, vpnmac
-
-All tables use the Partition key: UserId
+# Docker image
+There is a docker image available under the packages section of https://github.com/looprock/openvpn_gsuite_auth
