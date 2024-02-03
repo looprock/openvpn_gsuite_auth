@@ -1,6 +1,6 @@
 # About
 
-vpnauth is a self-service portal for user on-boarding and managing their password and TOTP credentials. At this point it naively assumes you're using TOTP as part of your authentication flow and won't work without TOTP being configured; though I might try to fix that.
+vpnauth is a self-service portal for user on-boarding and managing their password and TOTP credentials. 
 
 # Configuration
 
@@ -16,6 +16,12 @@ VPNAUTH_DYNAMODB_SECRET_KEY: an AWS secret key with access to VPNAUTH_DYNAMODB_P
 VPNAUTH_DYNAMODB_REGION: the AWS region your dynamoDB table lives in
 VPNAUTH_GOOGLE_CLIENT_ID: the client ID from your webapp oauth2 setup
 VPNAUTH_GOOGLE_CLIENT_SECRET: the client secret from your webapp oauth2 setup
+```
+
+## Optional environment variables
+If VPNAUTH_TOTP_ENCRYPTION_KEY is set, the flow for managing TOTP will be enabled in the interface.
+
+```
 VPNAUTH_TOTP_ENCRYPTION_KEY: the decryption key for decrypting entries from VPNAUTH_DYNAMODB_TOTP_TABLE
 ```
 

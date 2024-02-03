@@ -52,11 +52,12 @@ from forms import passwordForm
 # - auth against real google account
 # - set up real dns
 
-# vars
+# hardcoded env vars
 GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_TOKEN_URL = 'https://accounts.google.com/o/oauth2/token'
 GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 
+# required env vars
 if not os.environ.get('VPNAUTH_GSUITE_DOMAIN'):
     sys.exit("Error: VPNAUTH_GSUITE_DOMAIN environment variable is not set")
 else:
@@ -87,11 +88,10 @@ if not os.environ.get('VPNAUTH_GOOGLE_CLIENT_SECRET'):
 else:
     CLIENT_SECRET = os.environ.get('VPNAUTH_GOOGLE_CLIENT_SECRET')
 
-if not os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY'):
-    sys.exit("Error: VPNAUTH_TOTP_ENCRYPTION_KEY environment variable is not set")
-else:
-    TOTP_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY')
+# only trigger TOTP options if this is set
+TOTP_ENCRYPTION_KEY = os.environ.get('VPNAUTH_TOTP_ENCRYPTION_KEY')
 
+# vars with defaults
 OVPN_BASE_DIR = os.getenv('VPNAUTH_OVPN_BASE_DIR','/app/static/ovpn')
 REDIRECT_URI = os.getenv('VPNAUTH_REDIRECT_URI','http://127.0.0.1:5000/oauth2callback')
 SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
@@ -259,6 +259,9 @@ def load_user(user_id):
 def home():
     if not current_user.is_authenticated:
         return redirect('/login')
+    totp_enabled = True
+    if not TOTP_ENCRYPTION_KEY:
+        totp_enabled = False
     ovpnlist = get_ovpns()
     message = None
     if ovpnlist[0]:
@@ -266,7 +269,27 @@ def home():
     list_ovpns = False
     if len(ovpnlist[1]) > 0:
         list_ovpns = True
-    return render_template('home.html', current_user=current_user, message=message, list_ovpns=list_ovpns, ovpns=get_ovpns()[1])
+    return render_template('home.html', current_user=current_user, message=message, list_ovpns=list_ovpns, ovpns=get_ovpns()[1], totp_enabled=totp_enabled)
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if current_user.site_role != 'admin':
+        return render_template('home.html', current_user=current_user, message="You are not authorized to view this page!")
+    message = None
+    if request.method == 'POST':
+        form = request.form
+        if form['action'] == 'list_users':
+            message = list_dynamodb_users()
+        if form['action'] == 'delete_user':
+            response = delete_dynamodb_user(form['username'])
+            message = response['message']
+    user_list = sorted(list_dynamodb_users().split('\n'))
+    # db.session.get
+    print(type(user_list))
+    print(user_list)
+    return render_template('admin.html', current_user=current_user, message=message, user_list=user_list)
 
 @app.route('/password', methods=['GET', 'POST'])
 def password():
@@ -293,6 +316,8 @@ def password():
 def otpauth():
     if not current_user.is_authenticated:
         return redirect('/login')
+    if not TOTP_ENCRYPTION_KEY:
+        return render_template('home.html', current_user=current_user, message="Sorry, TOTP is disabled for this site!")
     userinfo = db.session.query(User).filter(User.id == current_user.id).first()
     if userinfo.otp_configured:
         return render_template("otpauth.html", img_data=None, completed=True)

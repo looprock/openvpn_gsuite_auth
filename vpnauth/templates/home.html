@@ -20,13 +20,23 @@
       {% else %}
       <p class="pt-2"><a href="/password">Update Password</a></p>
       {% endif %}
+      {% if totp_enabled %}
       {% if current_user.otp_configured == false %}
       <p class="pt-2"><a href="/otpauth">Onboarding Task: Setup OTP</a></p>
       {% else %}
       <p class="pt-2"><a href="/otpauth">Reset OTP</a></p>
-      {% endif %}      
+      {% endif %}
+      {% endif %}
+
+      {% if current_user.site_role == 'admin' %}
+      <hr>
+      <p class="pt-2">Admin Interface</p>
+      <p class="pt-2"><a href="/admin">Admin</a></p>
+      {% endif %}
+
       {% if list_ovpns %}
-      <p class="pt-5">Download VPN Configurations</p>
+      <hr>
+      <p class="pt-2">Download VPN Configurations</p>
       {% for ovpn in ovpns %}
       <p class="pt-2"><a href="{{ url_for('static', filename='ovpn/'+ovpn) }}">{{ ovpn }}</a></p>
       {% endfor %}
