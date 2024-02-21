@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-10 col-lg-8 mx-lg-auto mx-md-auto">
+      <h1 class="pt-5 pb-2">Home</h1>
+      <p class="pt-5"><h2>User admin</h2></p>
+      {% if message %}
+      <p class="pt-2"><strong>{{ message }}</strong></p>
+      {% endif %}
+      <table class="table delete-row-example">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>TOTP Configured</th>
+            <th>MACs</th> 
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in user_list %}
+          <tr>
+            <td><a href="/edituser/{{ user[0] }}">{{ user[7] }}</a></td>
+            <td>{{ user[4] }}</td>
+            <td>{{ user[5] }}</td>
+            <td>{{ user[8] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

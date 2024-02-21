@@ -97,6 +97,7 @@ REDIRECT_URI = os.getenv('VPNAUTH_REDIRECT_URI','http://127.0.0.1:5000/oauth2cal
 SCOPE = os.getenv('VPNAUTH_GOOGLE_SCOPE','openid%20email%20profile')
 DYNAMODB_PASSWD_TABLE = os.getenv('VPNAUTH_DYNAMODB_PASSWD_TABLE','vpnpasswd')
 DYNAMODB_TOTP_TABLE = os.getenv('VPNAUTH_DYNAMODB_TOTP_TABLE','vpntotp')
+DYNAMODB_MAC_TABLE = os.getenv('VPNAUTH_DYNAMODB_MAC_TABLE','vpnmac')
 SQLALCHEMY_DATABASE_URI = os.getenv('VPNAUTH_SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://vpnauth:vpnauth@127.0.0.1:5432/vpnauth')
 PBKDF2_ITERATIONS_STR = os.getenv('VPNAUTH_PBKDF2_ITERATIONS','15000')
 PBKDF2_ITERATIONS = int(PBKDF2_ITERATIONS_STR)
@@ -173,6 +174,34 @@ def list_dynamodb_users():
         result += f"{i['UserId']}\n"
     return result.strip()
 
+# MAC functions
+def reset_dynamodb_mac(username, mac_address):
+    '''Create or update a vpn user mac address.'''
+    item_entry = {
+        'UserId': username,
+        'MACS': mac_address,
+    }
+    try:
+        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY, region_name=DEFAULT_REGION).Table(DYNAMODB_MAC_TABLE)
+        table.put_item(Item=item_entry)
+        message = f"Mac address for {username} set to {mac_address}"
+        return {'message': message, 'error': False}
+    except ClientError as e:
+        return {'message': e, 'error': True}
+
+def list_dynamodb_macs(username):
+    '''List all mac addresses in dynamodb vpnauth table for a user.'''
+    table = boto3.resource('dynamodb').Table(DYNAMODB_MAC_TABLE)
+    response = table.get_item(
+        Key={
+            'UserId': username
+        }
+    )
+    if 'Item' not in response:
+        return []
+    else:
+        return list(response['Item']['MACS'])
+
 ## totp functions
 def reset_dynamodb_totp_secret(username, totp_secret):
     '''Create or update the encrypted TOTP shares secret.'''
@@ -224,6 +253,29 @@ def get_ovpns():
         return [e, ovpns]
     return [None, ovpns]
 
+def return_sorted_user_list(userinfo):
+    '''Return a sorted list of users from the dynamodb table.'''
+    all_users = {}
+    user_set = []
+    # build a dictionary of user data with 'lastname_firstname' as the key
+    for i in userinfo:
+        tmp_attrs = [i.id, i.name, i.email, i.profile_pic, i.site_role, i.otp_configured, i.password_configured]
+        name_bits = i.name.split(' ')
+        user_key = f"{name_bits[1]}, {name_bits[0]}"
+        tmp_attrs.append(user_key)
+        macs = list_dynamodb_macs(i.email)
+        if macs:
+            macs_string = ', '.join(macs)
+        else:
+            macs_string = 'No MACs registered'
+        tmp_attrs.append(macs_string)
+        all_users[user_key] = tmp_attrs
+    user_order = sorted(all_users.keys())
+    # generate a sorted list of lists from the dictionary
+    for i in user_order:
+        user_set.append(all_users[i])
+    return user_set
+
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 # require login for all static files
 app.view_functions['static'] = login_required(app.send_static_file)
@@ -271,25 +323,47 @@ def home():
         list_ovpns = True
     return render_template('home.html', current_user=current_user, message=message, list_ovpns=list_ovpns, ovpns=get_ovpns()[1], totp_enabled=totp_enabled)
 
-@app.route('/admin', methods=['GET', 'POST'])
+# @app.route('/admin', methods=['GET', 'POST'])
+@app.route('/admin', methods=['GET'])
 def admin():
     if not current_user.is_authenticated:
         return redirect('/login')
     if current_user.site_role != 'admin':
         return render_template('home.html', current_user=current_user, message="You are not authorized to view this page!")
     message = None
+    # if request.method == 'POST':
+    #     form = request.form
+    #     if form['action'] == 'list_users':
+    #         message = list_dynamodb_users()
+    #     if form['action'] == 'delete_user':
+    #         response = delete_dynamodb_user(form['username'])
+    #         message = response['message']
+    userinfo = db.session.query(User).all()
+    user_set = return_sorted_user_list(userinfo)
+    # print(user_set)
+    # user_list = sorted(list_dynamodb_users().split('\n'))
+    return render_template('admin.html', current_user=current_user, message=message, user_list=user_set)
+
+@app.route('/edituser/<int:userid>', methods=['GET', 'POST'])
+def edituser(userid):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if current_user.site_role != 'admin':
+        return render_template('home.html', current_user=current_user, message="You are not authorized to view this page!")
+    userinfo = db.session.query(User).filter(User.id == userid).first()
+    if not userinfo:
+        return render_template('home.html', current_user=current_user, message="User not found!")
+    message = None
     if request.method == 'POST':
         form = request.form
-        if form['action'] == 'list_users':
-            message = list_dynamodb_users()
         if form['action'] == 'delete_user':
-            response = delete_dynamodb_user(form['username'])
+            response = delete_dynamodb_user(userinfo.email)
             message = response['message']
-    user_list = sorted(list_dynamodb_users().split('\n'))
-    # db.session.get
-    print(type(user_list))
-    print(user_list)
-    return render_template('admin.html', current_user=current_user, message=message, user_list=user_list)
+            if not response['error']:
+                db.session.delete(userinfo)
+                db.session.commit()
+                return redirect('/admin')
+    return render_template('edituser.html', current_user=current_user, message=message, userinfo=userinfo)
 
 @app.route('/password', methods=['GET', 'POST'])
 def password():
