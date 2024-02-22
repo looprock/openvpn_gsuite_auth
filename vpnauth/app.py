@@ -391,6 +391,10 @@ def user(userid):
         form = request.form
         role = form.get('role')
         otp = form.get('otp_configured')
+        if otp == 'False':
+            otp = False
+        else:
+            otp = True
         macs = form.get('macs')
         # print(f"role: {role}, otp: {otp}, macs: {macs}")
         # if there is a mac address update, turn it into a list and update the dynamodb table
@@ -412,7 +416,7 @@ def user(userid):
                 return render_template('user.html', current_user=current_user, message=message, user=userinfo, user_key=return_user_key(userinfo.name), macs=macs)
         # otherwise update the DB
         userinfo.site_role = role
-        userinfo.otp_configured = bool(otp)
+        userinfo.otp_configured = otp
         db.session.commit()
         # then re-query the DB and return the user page
         userinfo = db.session.query(User).filter(User.id == userid).first()
