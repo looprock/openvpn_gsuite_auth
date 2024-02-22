@@ -1,0 +1,26 @@
+<tr hx-trigger='cancel' class='editing' hx-get="/user/{{ user.id }}">
+    <td>{{ user_key }}</td>
+    <td>
+        <select name='role'>
+            <option value='{{ user.site_role }}' selected>{{ user.site_role }}</option>
+            <option value='user'>user</option>
+            <option value='admin'>admin</option>
+        </select>
+    </td>
+    <td>
+        <select name='role'>
+        <option value='{{ user.otp_configured }}' selected>{{ user.otp_configured }}</option>
+        <option value='True'>True</option>
+        <option value='False'>False</option>
+        </select>
+    </td>
+    <td><input name='macs' value='{{ macs }}'></td>
+    <td>
+      <button class="btn btn-danger" hx-get="/user/{{ user.id }}" hx-target="closest tr">
+        Cancel
+      </button>
+      <button class="btn btn-danger" hx-put="/user/{{ user.id }}" hx-include="closest tr">
+        Save
+      </button>
+    </td>
+</tr>

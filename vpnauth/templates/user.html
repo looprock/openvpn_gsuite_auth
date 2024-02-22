@@ -1,0 +1,28 @@
+<tr>
+    <td>{{ user_key }}</td>
+    <td>{{ user.site_role }}</td>
+    <td>{{ user.otp_configured }}</td>
+    <td>{{ macs }}</td>
+    <td>
+        <button type="button"
+        hx-get="/edituser/{{ user[0] }}"
+        hx-trigger="edit"
+        hx-target="closest tr"
+        onClick="let editing = document.querySelector('.editing')
+                 if(editing) {
+                   Swal.fire({title: 'Already Editing',
+                              showCancelButton: true,
+                              confirmButtonText: 'Yep, Edit This Row!',
+                              text:'Hey!  You are already editing a row!  Do you want to cancel that edit and continue?'})
+                   .then((result) => {
+                        if(result.isConfirmed) {
+                           htmx.trigger(editing, 'cancel')
+                           htmx.trigger(this, 'edit')
+                        }
+                    })
+                 } else {
+                    htmx.trigger(this, 'edit')
+                 }">Edit
+        </button>
+    </td>
+</tr>

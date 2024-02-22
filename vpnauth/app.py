@@ -344,7 +344,7 @@ def admin():
     # user_list = sorted(list_dynamodb_users().split('\n'))
     return render_template('admin.html', current_user=current_user, message=message, user_list=user_set)
 
-@app.route('/edituser/<int:userid>', methods=['GET', 'POST'])
+@app.route('/edituser/<userid>', methods=['GET', 'POST'])
 def edituser(userid):
     if not current_user.is_authenticated:
         return redirect('/login')
@@ -363,7 +363,42 @@ def edituser(userid):
                 db.session.delete(userinfo)
                 db.session.commit()
                 return redirect('/admin')
-    return render_template('edituser.html', current_user=current_user, message=message, userinfo=userinfo)
+    macs = list_dynamodb_macs(userinfo.email)
+    if macs:
+        macs_string = ', '.join(macs)
+    else:
+        macs_string = ''
+    name_bits = userinfo.name.split(' ')
+    user_key = f"{name_bits[1]}, {name_bits[0]}"
+    return render_template('edituser.html', current_user=current_user, message=message, user=userinfo, user_key=user_key, macs=macs_string)
+
+@app.route('/user/<userid>', methods=['GET'])
+def user(userid):
+    if not current_user.is_authenticated:
+        return redirect('/login')
+    if current_user.site_role != 'admin':
+        return render_template('home.html', current_user=current_user, message="You are not authorized to view this page!")
+    userinfo = db.session.query(User).filter(User.id == userid).first()
+    if not userinfo:
+        return render_template('home.html', current_user=current_user, message="User not found!")
+    message = None
+    if request.method == 'POST':
+        form = request.form
+        if form['action'] == 'delete_user':
+            response = delete_dynamodb_user(userinfo.email)
+            message = response['message']
+            if not response['error']:
+                db.session.delete(userinfo)
+                db.session.commit()
+                return redirect('/admin')
+    macs = list_dynamodb_macs(userinfo.email)
+    if macs:
+        macs_string = ', '.join(macs)
+    else:
+        macs_string = 'No MACs registered'
+    name_bits = userinfo.name.split(' ')
+    user_key = f"{name_bits[1]}, {name_bits[0]}"
+    return render_template('user.html', current_user=current_user, message=message, user=userinfo, user_key=user_key, macs=macs_string)
 
 @app.route('/password', methods=['GET', 'POST'])
 def password():

@@ -17,16 +17,37 @@
             <th>User</th>
             <th>Role</th>
             <th>TOTP Configured</th>
-            <th>MACs</th> 
+            <th>MACs (comma separated)</th> 
+            <th></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody hx-target="closest tr" hx-swap="outerHTML">
           {% for user in user_list %}
           <tr>
-            <td><a href="/edituser/{{ user[0] }}">{{ user[7] }}</a></td>
+            <td>{{ user[7] }}</td>
             <td>{{ user[4] }}</td>
             <td>{{ user[5] }}</td>
             <td>{{ user[8] }}</td>
+            <td><button type="button"
+              hx-get="/edituser/{{ user[0] }}"
+              hx-trigger="edit"
+              onClick="let editing = document.querySelector('.editing')
+                       if(editing) {
+                         Swal.fire({title: 'Already Editing',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Yep, Edit This Row!',
+                                    text:'Hey!  You are already editing a row!  Do you want to cancel that edit and continue?'})
+                         .then((result) => {
+                              if(result.isConfirmed) {
+                                 htmx.trigger(editing, 'cancel')
+                                 htmx.trigger(this, 'edit')
+                              }
+                          })
+                       } else {
+                          htmx.trigger(this, 'edit')
+                       }">Edit
+              </button>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
