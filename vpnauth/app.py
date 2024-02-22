@@ -159,7 +159,7 @@ def reset_dynamodb_password(username, password=None):
 def delete_dynamodb_user(username):
     '''Delete a vpn user in dynamodb.'''
     try:
-        table = boto3.resource('dynamodb').Table(DYNAMODB_PASSWD_TABLE)
+        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY, region_name=DEFAULT_REGION).Table(DYNAMODB_PASSWD_TABLE)
         table.delete_item(Key={'UserId': username})
         message = f'User {username} deleted!'
         return {'message': message, 'error': False}
@@ -169,7 +169,7 @@ def delete_dynamodb_user(username):
 def list_dynamodb_users():
     '''List all users in dynamodb vpnauth table.'''
     result = ''
-    table = boto3.resource('dynamodb').Table(DYNAMODB_PASSWD_TABLE)
+    table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY, region_name=DEFAULT_REGION).Table(DYNAMODB_PASSWD_TABLE)
     for i in table.scan()['Items']:
         result += f"{i['UserId']}\n"
     return result.strip()
@@ -178,7 +178,7 @@ def list_dynamodb_users():
 def delete_dynamodb_mac(username):
     '''Delete a vpn user mac address in dynamodb.'''
     try:
-        table = boto3.resource('dynamodb').Table(DYNAMODB_MAC_TABLE)
+        table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY, region_name=DEFAULT_REGION).Table(DYNAMODB_MAC_TABLE)
         table.delete_item(Key={'UserId': username})
         message = f'MACs for {username} deleted!'
         return {'message': message, 'error': False}
@@ -201,7 +201,7 @@ def reset_dynamodb_mac(username, mac_address):
 
 def list_dynamodb_macs(username):
     '''List all mac addresses in dynamodb vpnauth table for a user.'''
-    table = boto3.resource('dynamodb').Table(DYNAMODB_MAC_TABLE)
+    table = boto3.resource('dynamodb', aws_access_key_id=DYNAMODB_ACCESS_KEY, aws_secret_access_key=DYNAMODB_SECRET_KEY, region_name=DEFAULT_REGION).Table(DYNAMODB_MAC_TABLE)
     response = table.get_item(
         Key={
             'UserId': username
