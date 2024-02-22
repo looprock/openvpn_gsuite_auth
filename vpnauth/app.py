@@ -175,6 +175,16 @@ def list_dynamodb_users():
     return result.strip()
 
 # MAC functions
+def delete_dynamodb_mac(username):
+    '''Delete a vpn user mac address in dynamodb.'''
+    try:
+        table = boto3.resource('dynamodb').Table(DYNAMODB_MAC_TABLE)
+        table.delete_item(Key={'UserId': username})
+        message = f'MACs for {username} deleted!'
+        return {'message': message, 'error': False}
+    except ClientError as e:
+        return {'message': e, 'error': True}
+
 def reset_dynamodb_mac(username, mac_address):
     '''Create or update a vpn user mac address.'''
     item_entry = {
@@ -253,6 +263,25 @@ def get_ovpns():
         return [e, ovpns]
     return [None, ovpns]
 
+def return_user_key(user_name):
+    name_bits = user_name.split(' ')
+    return f"{name_bits[1]}, {name_bits[0]}"
+
+def return_mac_string(user_email, return_empty=False):
+    '''Return a string of MAC addresses from a list.'''
+    # read the dynamodb table for the user's mac addresses
+    macs = list_dynamodb_macs(user_email)
+    # sometimes we want to return an empty string instead of a message
+    if return_empty:
+        no_macs = ''
+    else:
+        no_macs = 'No MACs registered'
+    # if there are macs return them as a string
+    if macs:
+        return ', '.join(macs)
+    # otherwise return the no_macs value
+    return no_macs
+
 def return_sorted_user_list(userinfo):
     '''Return a sorted list of users from the dynamodb table.'''
     all_users = {}
@@ -260,8 +289,7 @@ def return_sorted_user_list(userinfo):
     # build a dictionary of user data with 'lastname_firstname' as the key
     for i in userinfo:
         tmp_attrs = [i.id, i.name, i.email, i.profile_pic, i.site_role, i.otp_configured, i.password_configured]
-        name_bits = i.name.split(' ')
-        user_key = f"{name_bits[1]}, {name_bits[0]}"
+        user_key = return_user_key(i.name)
         tmp_attrs.append(user_key)
         macs = list_dynamodb_macs(i.email)
         if macs:
@@ -323,7 +351,6 @@ def home():
         list_ovpns = True
     return render_template('home.html', current_user=current_user, message=message, list_ovpns=list_ovpns, ovpns=get_ovpns()[1], totp_enabled=totp_enabled)
 
-# @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin', methods=['GET'])
 def admin():
     if not current_user.is_authenticated:
@@ -331,20 +358,12 @@ def admin():
     if current_user.site_role != 'admin':
         return render_template('home.html', current_user=current_user, message="You are not authorized to view this page!")
     message = None
-    # if request.method == 'POST':
-    #     form = request.form
-    #     if form['action'] == 'list_users':
-    #         message = list_dynamodb_users()
-    #     if form['action'] == 'delete_user':
-    #         response = delete_dynamodb_user(form['username'])
-    #         message = response['message']
     userinfo = db.session.query(User).all()
     user_set = return_sorted_user_list(userinfo)
-    # print(user_set)
-    # user_list = sorted(list_dynamodb_users().split('\n'))
+
     return render_template('admin.html', current_user=current_user, message=message, user_list=user_set)
 
-@app.route('/edituser/<userid>', methods=['GET', 'POST'])
+@app.route('/edituser/<userid>', methods=['GET'])
 def edituser(userid):
     if not current_user.is_authenticated:
         return redirect('/login')
@@ -354,25 +373,11 @@ def edituser(userid):
     if not userinfo:
         return render_template('home.html', current_user=current_user, message="User not found!")
     message = None
-    if request.method == 'POST':
-        form = request.form
-        if form['action'] == 'delete_user':
-            response = delete_dynamodb_user(userinfo.email)
-            message = response['message']
-            if not response['error']:
-                db.session.delete(userinfo)
-                db.session.commit()
-                return redirect('/admin')
-    macs = list_dynamodb_macs(userinfo.email)
-    if macs:
-        macs_string = ', '.join(macs)
-    else:
-        macs_string = ''
-    name_bits = userinfo.name.split(' ')
-    user_key = f"{name_bits[1]}, {name_bits[0]}"
+    macs_string = return_mac_string(userinfo.email, return_empty=True)
+    user_key = return_user_key(userinfo.name)
     return render_template('edituser.html', current_user=current_user, message=message, user=userinfo, user_key=user_key, macs=macs_string)
 
-@app.route('/user/<userid>', methods=['GET'])
+@app.route('/user/<userid>', methods=['GET', 'PUT'])
 def user(userid):
     if not current_user.is_authenticated:
         return redirect('/login')
@@ -382,22 +387,48 @@ def user(userid):
     if not userinfo:
         return render_template('home.html', current_user=current_user, message="User not found!")
     message = None
-    if request.method == 'POST':
+    if request.method == 'PUT':
         form = request.form
-        if form['action'] == 'delete_user':
-            response = delete_dynamodb_user(userinfo.email)
-            message = response['message']
-            if not response['error']:
-                db.session.delete(userinfo)
-                db.session.commit()
-                return redirect('/admin')
-    macs = list_dynamodb_macs(userinfo.email)
-    if macs:
-        macs_string = ', '.join(macs)
-    else:
-        macs_string = 'No MACs registered'
-    name_bits = userinfo.name.split(' ')
-    user_key = f"{name_bits[1]}, {name_bits[0]}"
+        role = form.get('role')
+        otp = form.get('otp_configured')
+        macs = form.get('macs')
+        # print(f"role: {role}, otp: {otp}, macs: {macs}")
+        # if there is a mac address update, turn it into a list and update the dynamodb table
+        current_macs = return_mac_string(userinfo.email)
+        if macs != current_macs:
+            if macs == '':
+                macs = None
+            if not macs:
+                # print(f"deleting macs for {userinfo.email}")
+                response = delete_dynamodb_mac(userinfo.email)
+            else:
+                macs = macs.replace(' ', '')
+                mac_list = macs.split(',')
+                response = reset_dynamodb_mac(userinfo.email, mac_list)
+            # print(f"response: {response}")
+            if response['error']:
+                message = response['message']
+                userinfo = db.session.query(User).filter(User.id == userid).first()
+                return render_template('user.html', current_user=current_user, message=message, user=userinfo, user_key=return_user_key(userinfo.name), macs=macs)
+        # otherwise update the DB
+        userinfo.site_role = role
+        userinfo.otp_configured = bool(otp)
+        db.session.commit()
+        # then re-query the DB and return the user page
+        userinfo = db.session.query(User).filter(User.id == userid).first()
+        final_macs = return_mac_string(userinfo.email)
+        return render_template('user.html', current_user=current_user, message=message, user=userinfo, user_key=return_user_key(userinfo.name), macs=final_macs)
+
+        # if form['action'] == 'delete_user':
+        #     response = delete_dynamodb_user(userinfo.email)
+        #     message = response['message']
+        #     if not response['error']:
+        #         db.session.delete(userinfo)
+        #         db.session.commit()
+        #         return redirect('/admin')
+    # otherwise this is a GET request
+    macs_string = return_mac_string(userinfo.email)
+    user_key = return_user_key(userinfo.name)
     return render_template('user.html', current_user=current_user, message=message, user=userinfo, user_key=user_key, macs=macs_string)
 
 @app.route('/password', methods=['GET', 'POST'])

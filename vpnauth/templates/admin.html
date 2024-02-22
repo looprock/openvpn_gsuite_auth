@@ -21,7 +21,7 @@
             <th></th>
           </tr>
         </thead>
-        <tbody hx-target="closest tr" hx-swap="outerHTML">
+        <tbody hx-target="closest tr" hx-swap="outerHTML" hx-vals='{"csrf_token": "{{ csrf_token() }}" }'>
           {% for user in user_list %}
           <tr>
             <td>{{ user[7] }}</td>
